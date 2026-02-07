@@ -1,18 +1,6 @@
 import 'package:flutter/material.dart';
-
-void main() => runApp(const MyApp());
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const ApprovalPage(),
-    );
-  }
-}
+import 'package:ukk/supabase_config.dart';
+import 'package:ukk/login.dart';
 
 class ApprovalPage extends StatelessWidget {
   const ApprovalPage({super.key});
@@ -48,7 +36,16 @@ class ApprovalPage extends StatelessWidget {
                       )
                     ],
                   ),
-                  const Icon(Icons.arrow_back, color: Colors.green, size: 30),
+                  // Tombol Logout
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.red),
+                    onPressed: () async {
+                      await supabase.auth.signOut();
+                      if (context.mounted) {
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
@@ -117,7 +114,6 @@ class ApprovalPage extends StatelessWidget {
     );
   }
 
-  // Widget Helper untuk Kartu Persetujuan
   Widget _buildApprovalCard(String item, String date, String qty) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),

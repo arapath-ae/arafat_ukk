@@ -1,19 +1,6 @@
 import 'package:flutter/material.dart';
-
-void main() => runApp(const MyApp());
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(fontFamily: 'Sans-Serif'),
-      home: const PeminjamPage(),
-    );
-  }
-}
+import 'package:ukk/supabase_config.dart';
+import 'package:ukk/login.dart';
 
 class PeminjamPage extends StatelessWidget {
   const PeminjamPage({super.key});
@@ -48,7 +35,16 @@ class PeminjamPage extends StatelessWidget {
                       )
                     ],
                   ),
-                  const Icon(Icons.arrow_back, color: Colors.green, size: 30),
+                  // Tombol Logout
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.red),
+                    onPressed: () async {
+                      await supabase.auth.signOut();
+                      if (context.mounted) {
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                      }
+                    },
+                  ),
                 ],
               ),
             ),

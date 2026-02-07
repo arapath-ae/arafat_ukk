@@ -1,32 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:ukk/supabase_config.dart';
+import 'package:ukk/login.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AdminPage extends StatelessWidget {
+  const AdminPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: InventoryPage(),
-    );
-  }
-}
+    // Data dummy untuk list barang
+    final List<Map<String, String>> items = [
+      {'nama': 'Monitor LG', 'image': 'https://via.placeholder.com/100'},
+      {'nama': 'Keyboard Mechanical', 'image': 'https://via.placeholder.com/100'},
+      {'nama': 'Mouse Gaming', 'image': 'https://via.placeholder.com/100'},
+      {'nama': 'PC Case', 'image': 'https://via.placeholder.com/100'},
+    ];
 
-class InventoryPage extends StatelessWidget {
-  // Data dummy untuk list barang
-  final List<Map<String, String>> items = [
-    {'nama': 'Monitor LG', 'image': 'https://via.placeholder.com/100'},
-    {'nama': 'Keyboard Mechanical', 'image': 'https://via.placeholder.com/100'},
-    {'nama': 'Mouse Gaming', 'image': 'https://via.placeholder.com/100'},
-    {'nama': 'PC Case', 'image': 'https://via.placeholder.com/100'},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -36,19 +24,34 @@ class InventoryPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.grey[200],
-                    child: Icon(Icons.person, color: Colors.grey[400]),
-                  ),
-                  const SizedBox(width: 15),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('M A S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                      Text('admin', style: TextStyle(color: Colors.grey)),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Colors.grey[200],
+                        child: Icon(Icons.person, color: Colors.grey[400]),
+                      ),
+                      const SizedBox(width: 15),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('M A S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                          Text('admin', style: TextStyle(color: Colors.grey)),
+                        ],
+                      )
                     ],
-                  )
+                  ),
+                  // Tombol Logout
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.red),
+                    onPressed: () async {
+                      await supabase.auth.signOut();
+                      if (context.mounted) {
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
@@ -90,7 +93,6 @@ class InventoryPage extends StatelessWidget {
                       padding: const EdgeInsets.all(15.0),
                       child: Row(
                         children: [
-                          // Thumbnail Box
                           Container(
                             width: 80,
                             height: 80,
@@ -98,10 +100,9 @@ class InventoryPage extends StatelessWidget {
                               color: Colors.greenAccent[100],
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            child: Icon(Icons.computer, size: 40, color: Colors.black54),
+                            child: const Icon(Icons.computer, size: 40, color: Colors.black54),
                           ),
                           const SizedBox(width: 15),
-                          // Info & Buttons
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,14 +131,12 @@ class InventoryPage extends StatelessWidget {
         ),
       ),
       
-      // Floating Action Button
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         backgroundColor: Colors.greenAccent,
         child: const Icon(Icons.add, color: Colors.black, size: 30),
       ),
 
-      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.green,
@@ -155,7 +154,6 @@ class InventoryPage extends StatelessWidget {
     );
   }
 
-  // Helper widget untuk tombol edit/hapus
   Widget _actionButton(IconData icon, Color bgColor, {Color iconColor = Colors.grey}) {
     return Container(
       padding: const EdgeInsets.all(5),

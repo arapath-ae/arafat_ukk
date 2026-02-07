@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ukk/main.dart';
+import 'supabase_config.dart'; // Import config untuk akses variabel supabase
+import 'admin.dart';
+import 'peminjam.dart';
+import 'petugas.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,30 +15,39 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final supabase = Supabase.instance.client;
   
   bool obscureText = true;
   bool isLoading = false;
+  String? emailError;
+  String? passwordError;
+  String? generalError;
 
-  // Fungsi Utama Login & Routing
   Future<void> signIn() async {
-    // Validasi input kosong
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      _showSnackBar("Email dan Password tidak boleh kosong", Colors.orange);
+    setState(() {
+      emailError = null;
+      passwordError = null;
+      generalError = null;
+    });
+
+    if (emailController.text.isEmpty) {
+      setState(() => emailError = "Email tidak boleh kosong");
+      return;
+    }
+    if (passwordController.text.isEmpty) {
+      setState(() => passwordError = "Password tidak boleh kosong");
       return;
     }
 
     setState(() => isLoading = true);
 
     try {
-      // 1. Proses Sign In ke Supabase Auth
       final response = await supabase.auth.signInWithPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
       if (response.user != null) {
-        // 2. Ambil data role dari tabel 'profiles' berdasarkan UID user
+        // Ambil role dari tabel profiles
         final userData = await supabase
             .from('profiles')
             .select('role')
@@ -43,34 +55,31 @@ class _LoginPageState extends State<LoginPage> {
             .single();
 
         String role = userData['role'];
-
+        
         if (!mounted) return;
 
-        // 3. Navigasi sesuai Role
+        // Navigasi ke halaman sesuai role
         if (role == 'admin') {
-          Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => const AdminPage()));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AdminPage()));
         } else if (role == 'petugas') {
-          Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => const ApprovalPage()));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ApprovalPage()));
         } else {
-          Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => const PeminjamPage()));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PeminjamPage()));
         }
       }
     } on AuthException catch (error) {
-      _showSnackBar(error.message, Colors.red);
+      setState(() {
+        if (error.message.contains("Invalid login credentials")) {
+          generalError = "Email atau password salah";
+        } else {
+          generalError = error.message;
+        }
+      });
     } catch (error) {
-      _showSnackBar("Terjadi kesalahan tak terduga", Colors.red);
+      setState(() => generalError = "Terjadi kesalahan: $error");
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
-  }
-
-  void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: color),
-    );
   }
 
   @override
@@ -79,65 +88,57 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
                 "Hi, Selamat Datang!",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 60),
 
-              // Input Email
-              _buildInputLabel("Email"),
-              const SizedBox(height: 5),
-              _buildTextField(
+              _buildDecoratedInput(
+                label: "Email",
                 controller: emailController,
                 hint: "Masukkan Email",
-                isPass: false,
+                errorText: emailError,
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 25),
 
-              // Input Password
-              _buildInputLabel("Password"),
-              const SizedBox(height: 5),
-              _buildTextField(
+              _buildDecoratedInput(
+                label: "Password",
                 controller: passwordController,
                 hint: "Masukkan Password",
                 isPass: true,
+                errorText: passwordError,
               ),
 
-              const SizedBox(height: 30),
+              if (generalError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Text(
+                    generalError!,
+                    style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                  ),
+                ),
 
-              // Tombol Login
+              const SizedBox(height: 40),
+
               SizedBox(
                 width: double.infinity,
-                height: 45,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: isLoading ? null : signIn,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    backgroundColor: const Color(0xFF108A3E),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
                   child: isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text(
-                          "LOGIN",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text("LOGIN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
             ],
@@ -147,49 +148,69 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Widget Helper untuk Label
-  Widget _buildInputLabel(String label) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        label,
-        style: TextStyle(
-          color: Colors.green[700],
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  // Widget Helper untuk TextField
-  Widget _buildTextField({
+  Widget _buildDecoratedInput({
+    required String label,
     required TextEditingController controller,
     required String hint,
-    required bool isPass,
+    bool isPass = false,
+    String? errorText,
   }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPass ? obscureText : false,
-      decoration: InputDecoration(
-        hintText: hint,
-        suffixIcon: isPass
-            ? IconButton(
-                icon: Icon(
-                  obscureText ? Icons.visibility_off : Icons.visibility,
+    bool hasError = errorText != null;
+    Color themeColor = hasError ? Colors.redAccent : const Color(0xFF108A3E);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              height: 55,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: themeColor, width: 1.5),
+              ),
+              child: TextField(
+                controller: controller,
+                obscureText: isPass ? obscureText : false,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                  border: InputBorder.none,
+                  suffixIcon: isPass
+                      ? IconButton(
+                          icon: Icon(
+                            obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            color: Colors.grey,
+                            size: 20,
+                          ),
+                          onPressed: () => setState(() => obscureText = !obscureText),
+                        )
+                      : null,
                 ),
-                onPressed: () => setState(() => obscureText = !obscureText),
-              )
-            : null,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.green),
+              ),
+            ),
+            Positioned(
+              left: 12,
+              top: -10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                color: Colors.white,
+                child: Text(
+                  label,
+                  style: TextStyle(color: themeColor, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            ),
+          ],
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.green, width: 2),
-        ),
-      ),
+        if (hasError)
+          Padding(
+            padding: const EdgeInsets.only(top: 5, left: 5),
+            child: Text(errorText, style: const TextStyle(color: Colors.redAccent, fontSize: 11)),
+          ),
+      ],
     );
   }
 }
